@@ -1,0 +1,21 @@
+{
+  "name": "broken-loop",
+  "version": "1.0.0",
+  "description": "Break up long-running computations to avoid blocking the event loop.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dphilipson/broken-loop.git"
+  },
+  "keywords": [
+    "loop",
+    "computation",
+    "break",
+    "yield"
+  ],
+  "author": "David Philipson <dphilipson@gmail.com> (http://dphil.me)",
+  "license": "MIT"
+}
