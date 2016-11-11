@@ -1,16 +1,15 @@
 import { expect } from 'chai';
-import Startup from '../src/Startup';
+import { loopSynchronous } from '../src/index';
 
-describe('The tests run', () => {
-    describe('1 + 1', () => {
-        it('should equal 2', () => {
-            expect(1 + 1).to.equal(2);
-        });        
-    });
-
-    describe('Startup', () => {
-        it('should have a main method', () => {
-            expect(Startup.main).to.not.be.undefined;
+describe('loopSynchronous', () => {
+    it ('should return value on immediate success', () => {
+        const result = loopSynchronous<string>(onSuccess => {
+            onSuccess('Success');
         });
+        expect(result).to.equal('Success');
     });
+    it ('should throw on immediate failure', () => {
+        const error = new Error('My error');
+        expect(() => loopSynchronous((onSuccess, onFailure) => onFailure(error))).to.throw(error);
+    })
 });
