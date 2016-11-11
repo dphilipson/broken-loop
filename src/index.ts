@@ -16,3 +16,9 @@ export function loopSynchronous<T>(body: LoopBody<T>): T {
     }
     return success.success;
 }
+
+export function loopYieldingly<T>(body: LoopBody<T>): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+        body(resolve, reject);
+    });
+}
