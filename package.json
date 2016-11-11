@@ -2,13 +2,16 @@
   "name": "broken-loop",
   "version": "1.0.0",
   "description": "Break up long-running computations to avoid blocking the event loop.",
-  "main": "lib/index.js",
-  "types": "lib/index",
+  "main": "dist/index.js",
+  "types": "dist/index",
   "files": [
-    "lib/"
+    "dist/"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rm -rf dist && tsc",
+    "prepublish": "npm run build",
+    "test": "mocha -r ts-node/register test/**/*.ts",
+    "watch": "rm -rf dist && tsc --watch"
   },
   "repository": {
     "type": "git",
@@ -21,5 +24,13 @@
     "yield"
   ],
   "author": "David Philipson <dphilipson@gmail.com> (http://dphil.me)",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@types/chai": "^3.4.34",
+    "@types/mocha": "^2.2.32",
+    "chai": "^3.5.0",
+    "mocha": "^3.1.2",
+    "ts-node": "^1.7.0",
+    "typescript": "^2.0.9"
+  }
 }

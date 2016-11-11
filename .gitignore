@@ -6,4 +6,5 @@
 !.vscode/tasks.json
 !.vscode/launch.json
 
-lib/
+dist/
+node_modules/
