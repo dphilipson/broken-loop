@@ -1,0 +1,21 @@
+{
+    "compileOnSave": true,
+    "compilerOptions": {
+        "declaration": true,
+        "module": "commonjs",
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "outDir": "lib/",
+        "sourceMap": true,
+        "strictNullChecks": true,
+        "target": "es5",
+        "watch": true
+    },
+    "files": [
+        "./src/index.ts"
+    ]
+}

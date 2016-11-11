@@ -2,7 +2,11 @@
   "name": "broken-loop",
   "version": "1.0.0",
   "description": "Break up long-running computations to avoid blocking the event loop.",
-  "main": "index.js",
+  "main": "lib/index.js",
+  "types": "lib/index",
+  "files": [
+    "lib/"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
