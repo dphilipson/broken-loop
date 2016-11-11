@@ -9,8 +9,10 @@
   ],
   "scripts": {
     "build": "rm -rf dist && tsc",
+    "lint": "tslint --project .",
+    "mocha": "mocha -r ts-node/register test/**/*.ts",
     "prepublish": "npm run build",
-    "test": "mocha -r ts-node/register test/**/*.ts",
+    "test": "npm run lint && npm run mocha",
     "watch": "rm -rf dist && tsc --watch"
   },
   "repository": {
@@ -31,6 +33,7 @@
     "chai": "^3.5.0",
     "mocha": "^3.1.2",
     "ts-node": "^1.7.0",
+    "tslint": "^3.15.1",
     "typescript": "^2.0.9"
   }
 }
