@@ -61,4 +61,30 @@ describe("loopYieldingly", () => {
         });
         return expect(promise).to.be.rejectedWith(error);
     });
+
+    it("should resolve after looping", () => {
+        let i = 0;
+        let sum = 0;
+        const promise = loopYieldingly<number>((onSuccess, onFailure) => {
+            if (i >= 10) {
+                return onSuccess(sum);
+            } else {
+                sum += i++;
+            }
+        });
+        return expect(promise).to.eventually.equal(45);
+    });
+
+    it("should reject after looping", () => {
+        const error = new Error("My error");
+        let i = 0;
+        const promise = loopYieldingly<any>((onSuccess, onFailure) => {
+            if (i >= 10) {
+                return onFailure(error);
+            } else {
+                i++;
+            }
+        });
+        return expect(promise).to.eventually.be.rejectedWith(error);
+    });
 });
