@@ -8,23 +8,23 @@ chai.use(chaiAsPromised);
 
 describe("loopSynchronous", () => {
     it("should return value on immediate success", () => {
-        const result = loopSynchronous<string>(onSuccess => {
-            onSuccess("Success");
+        const result = loopSynchronous<string>(done => {
+            done("Success");
         });
         expect(result).to.equal("Success");
     });
 
     it("should throw on immediate failure", () => {
         const error = new Error("My error");
-        expect(() => loopSynchronous((_, onFailure) => onFailure(error))).to.throw(error);
+        expect(() => loopSynchronous(() => { throw error; })).to.throw(error);
     });
 
     it("should return success after looping", () => {
         let i = 0;
         let sum = 0;
-        const result = loopSynchronous<number>((onSuccess, onFailure) => {
+        const result = loopSynchronous<number>(done => {
             if (i >= 10) {
-                return onSuccess(sum);
+                return done(sum);
             } else {
                 sum += i++;
             }
@@ -35,9 +35,9 @@ describe("loopSynchronous", () => {
     it("should throw failure after looping", () => {
         const error = new Error("My error");
         let i = 0;
-        const body: LoopBody<any> = (onSuccess, onFailure) => {
+        const body: LoopBody<any> = done => {
             if (i >= 10) {
-                return onFailure(error);
+                throw error;
             } else {
                 i++;
             }
@@ -48,16 +48,16 @@ describe("loopSynchronous", () => {
 
 describe("loopYieldingly", () => {
     it("should resolve on immediate success", () => {
-        const promise = loopYieldingly<string>((onSuccess, onFailure) => {
-            onSuccess("Success");
+        const promise = loopYieldingly<string>(done => {
+            done("Success");
         });
         return expect(promise).to.eventually.equal("Success");
     });
 
     it("should reject on immediate failure", () => {
         const error = new Error("My error");
-        const promise = loopYieldingly<any>((onSuccess, onFailure) => {
-            onFailure(error);
+        const promise = loopYieldingly<any>(() => {
+            throw error;
         });
         return expect(promise).to.be.rejectedWith(error);
     });
@@ -65,9 +65,9 @@ describe("loopYieldingly", () => {
     it("should resolve after looping", () => {
         let i = 0;
         let sum = 0;
-        const promise = loopYieldingly<number>((onSuccess, onFailure) => {
+        const promise = loopYieldingly<number>(done => {
             if (i >= 10) {
-                return onSuccess(sum);
+                return done(sum);
             } else {
                 sum += i++;
             }
@@ -78,17 +78,13 @@ describe("loopYieldingly", () => {
     it("should reject after looping", () => {
         const error = new Error("My error");
         let i = 0;
-        const promise = loopYieldingly<any>((onSuccess, onFailure) => {
+        const promise = loopYieldingly<any>(() => {
             if (i >= 10) {
-                return onFailure(error);
+                throw error;
             } else {
                 i++;
             }
         });
         return expect(promise).to.eventually.be.rejectedWith(error);
     });
-
-    it("should yield once if overtime once", () => {
-        
-    })
 });
