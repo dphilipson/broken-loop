@@ -87,4 +87,8 @@ describe("loopYieldingly", () => {
         });
         return expect(promise).to.eventually.be.rejectedWith(error);
     });
+
+    it("should yield once if overtime once", () => {
+        
+    })
 });
