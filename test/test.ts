@@ -1,6 +1,6 @@
 import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
-import { spy, stub } from "sinon";
+import { spy } from "sinon";
 import * as sinonChai from "sinon-chai";
 import { LoopBody, loopSynchronous, loopYieldingly, YieldOptions } from "../src/index";
 
@@ -34,11 +34,26 @@ describe("loopSynchronous", () => {
 });
 
 describe("loopYieldingly", () => {
-    // Calls not testing yield behavior have constant getTimeFn to ensure no yields occur.
+    let time: number;
+    const addTime = (ms: number) => time += ms;
+    const getTimeFn = () => time;
+    let yieldFn: Sinon.SinonSpy;
+    let options: YieldOptions;
+
+    beforeEach(() => {
+        time = 0;
+        yieldFn = spy((action: () => void) => setTimeout(action, 0));
+        options = {
+            timeBetweenYields: 100,
+            getTimeFn,
+            yieldFn,
+        };
+    });
+
     it("should resolve on immediate success", () => {
         const promise = loopYieldingly(
             done => done("Success"),
-            { getTimeFn: () => 0 }
+            options
         );
         return expect(promise).to.eventually.equal("Success");
     });
@@ -47,7 +62,7 @@ describe("loopYieldingly", () => {
         const error = new Error("My error");
         const promise = loopYieldingly(
             () => { throw error; },
-            { getTimeFn: () => 0 }
+            options
         );
         return expect(promise).to.be.rejectedWith(error);
     });
@@ -55,7 +70,7 @@ describe("loopYieldingly", () => {
     it("should resolve after looping", () => {
         const promise = loopYieldingly(
             summingBody(10),
-            { getTimeFn: () => 0 }
+            options
         );
         return expect(promise).to.eventually.equal(45);
     });
@@ -64,23 +79,22 @@ describe("loopYieldingly", () => {
         const error = new Error("My error");
         const promise = loopYieldingly(
             afterNIterations(10, () => { throw error; }),
-            { getTimeFn: () => 0 }
+            options
         );
         return expect(promise).to.eventually.be.rejectedWith(error);
     });
 
     it("should not yield if loop ends before time limit", done => {
-        const getTimeFn = stub();
-        getTimeFn.onFirstCall().returns(0);
-        getTimeFn.returns(90);
-        const yieldFn = spy((action: () => void) => setTimeout(action, 0));
-        const options: YieldOptions = {
-            timeBetweenYields: 100,
-            getTimeFn,
-            yieldFn,
-        };
+        let i = 0;
         loopYieldingly(
-            afterNIterations(1, onSuccess => onSuccess("Success")),
+            onSuccess => {
+                if (i === 0) {
+                    addTime(90);
+                } else {
+                    onSuccess("Success");
+                }
+                i++;
+            },
             options
         ).then(success => {
             expect(success).to.equal("Success");
@@ -90,17 +104,16 @@ describe("loopYieldingly", () => {
     });
 
     it("should yield after first loop if time greater than limit", done => {
-        const getTimeFn = stub();
-        getTimeFn.onFirstCall().returns(0);
-        getTimeFn.returns(110);
-        const yieldFn = spy((action: () => void) => setTimeout(action, 0));
-        const options: YieldOptions = {
-            timeBetweenYields: 100,
-            getTimeFn,
-            yieldFn,
-        };
+        let i = 0;
         loopYieldingly(
-            afterNIterations(1, onSuccess => onSuccess("Success")),
+            onSuccess => {
+                if (i === 0) {
+                    addTime(110);
+                } else {
+                    onSuccess("Success");
+                }
+                i++;
+            },
             options,
         ).then(success => {
             expect(success).to.equal("Success");
@@ -110,15 +123,6 @@ describe("loopYieldingly", () => {
     });
 
     it("should yield multiple times if time is several times the limit", done => {
-        let time = 0;
-        const addTime = (ms: number) => time += ms;
-        const getTimeFn = () => time;
-        const yieldFn = spy((action: () => void) => setTimeout(action, 0));
-        const options: YieldOptions = {
-            timeBetweenYields: 100,
-            getTimeFn,
-            yieldFn,
-        };
         let i = 0;
         loopYieldingly(
             onSuccess => {
