@@ -36,35 +36,49 @@ export function loopSynchronous<T>(body: LoopBody<T>): T {
     }
 }
 
-export function loopYieldingly<T>(body: LoopBody<T>, options: YieldOptions = {}): Promise<T> {
-    const {
-        timeBetweenYields,
-        getTimeFn,
-        yieldFn,
-    } = Object.assign({}, DEFAULT_OPTIONS, options);
-    let status = Status.inProgress<T>();
-    return new Promise((resolve, reject) => {
-        const loop = () => {
-            const startTime = getTimeFn();
-            while (
-                status.type === Status.Type.InProgress
-                && getTimeFn() - startTime < timeBetweenYields
-            ) {
-                try {
-                    body(result => { status = Status.success(result); });
-                } catch (error) {
-                    status = Status.failure<T>(error);
+export class Looper {
+    private readonly options: AllYieldOptions;
+
+    constructor(options: YieldOptions = {}) {
+        this.options = Object.assign({}, DEFAULT_OPTIONS, options);
+    }
+
+    public loopYieldingly<T>(body: LoopBody<T>): Promise<T> {
+        const {
+            timeBetweenYields,
+            getTimeFn,
+            yieldFn,
+        } = this.options;
+        let status = Status.inProgress<T>();
+        return new Promise((resolve, reject) => {
+            const loop = () => {
+                const startTime = getTimeFn();
+                while (
+                    status.type === Status.Type.InProgress
+                    && getTimeFn() - startTime < timeBetweenYields
+                ) {
+                    try {
+                        body(result => { status = Status.success(result); });
+                    } catch (error) {
+                        status = Status.failure<T>(error);
+                    }
                 }
-            }
-            switch (status.type) {
-                case Status.Type.Success:
-                    return resolve(status.result);
-                case Status.Type.Failure:
-                    return reject(status.error);
-                default:
-                    return yieldFn(loop);
-            }
-        };
-        loop();
-    });
+                switch (status.type) {
+                    case Status.Type.Success:
+                        return resolve(status.result);
+                    case Status.Type.Failure:
+                        return reject(status.error);
+                    default:
+                        return yieldFn(loop);
+                }
+            };
+            loop();
+        });
+    }
+}
+
+const DEFAULT_LOOPER = new Looper();
+
+export function loopYieldingly<T>(body: LoopBody<T>): Promise<T> {
+    return DEFAULT_LOOPER.loopYieldingly(body);
 }

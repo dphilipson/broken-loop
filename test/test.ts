@@ -2,7 +2,7 @@ import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
 import { spy } from "sinon";
 import * as sinonChai from "sinon-chai";
-import { LoopBody, loopSynchronous, loopYieldingly, YieldOptions } from "../src/index";
+import { LoopBody, loopSynchronous, Looper, YieldOptions } from "../src/index";
 
 const { expect } = chai;
 
@@ -39,6 +39,7 @@ describe("loopYieldingly", () => {
     const getTimeFn = () => time;
     let yieldFn: Sinon.SinonSpy;
     let options: YieldOptions;
+    let looper: Looper;
 
     beforeEach(() => {
         time = 0;
@@ -48,45 +49,34 @@ describe("loopYieldingly", () => {
             getTimeFn,
             yieldFn,
         };
+        looper = new Looper(options);
     });
 
     it("should resolve on immediate success", () => {
-        const promise = loopYieldingly(
-            done => done("Success"),
-            options
-        );
+        const promise = looper.loopYieldingly(done => done("Success"));
         return expect(promise).to.eventually.equal("Success");
     });
 
     it("should reject on immediate failure", () => {
         const error = new Error("My error");
-        const promise = loopYieldingly(
-            () => { throw error; },
-            options
-        );
+        const promise = looper.loopYieldingly(() => { throw error; });
         return expect(promise).to.be.rejectedWith(error);
     });
 
     it("should resolve after looping", () => {
-        const promise = loopYieldingly(
-            summingBody(10),
-            options
-        );
+        const promise = looper.loopYieldingly(summingBody(10));
         return expect(promise).to.eventually.equal(45);
     });
 
     it("should reject after looping", () => {
         const error = new Error("My error");
-        const promise = loopYieldingly(
-            afterNIterations(10, () => { throw error; }),
-            options
-        );
+        const promise = looper.loopYieldingly(afterNIterations(10, () => { throw error; }));
         return expect(promise).to.eventually.be.rejectedWith(error);
     });
 
     it("should not yield if loop ends before time limit", done => {
         let i = 0;
-        loopYieldingly(
+        looper.loopYieldingly(
             onSuccess => {
                 if (i === 0) {
                     addTime(90);
@@ -94,8 +84,7 @@ describe("loopYieldingly", () => {
                     onSuccess("Success");
                 }
                 i++;
-            },
-            options
+            }
         ).then(success => {
             expect(success).to.equal("Success");
             expect(yieldFn).to.not.have.been.called;
@@ -105,7 +94,7 @@ describe("loopYieldingly", () => {
 
     it("should yield after first loop if time greater than limit", done => {
         let i = 0;
-        loopYieldingly(
+        looper.loopYieldingly(
             onSuccess => {
                 if (i === 0) {
                     addTime(110);
@@ -113,8 +102,7 @@ describe("loopYieldingly", () => {
                     onSuccess("Success");
                 }
                 i++;
-            },
-            options,
+            }
         ).then(success => {
             expect(success).to.equal("Success");
             expect(yieldFn).to.have.been.calledOnce;
@@ -124,7 +112,7 @@ describe("loopYieldingly", () => {
 
     it("should yield multiple times if time is several times the limit", done => {
         let i = 0;
-        loopYieldingly(
+        looper.loopYieldingly(
             onSuccess => {
                 if (i < 10) {
                     // Should yield every two iterations.
@@ -133,8 +121,7 @@ describe("loopYieldingly", () => {
                     onSuccess("Success");
                 }
                 i++;
-            },
-            options,
+            }
         ).then(success => {
             expect(success).to.equal("Success");
             expect(yieldFn).to.have.callCount(5);
