@@ -70,10 +70,10 @@ describe("loopYieldingly", () => {
     });
 
     it("should not yield if loop ends before time limit", done => {
-        const getTimeFn = stub()
-            .onCall(0).returns(0)
-            .onCall(1).returns(90);
-        const yieldFn = spy((action: () => void) => action());
+        const getTimeFn = stub();
+        getTimeFn.onFirstCall().returns(0);
+        getTimeFn.returns(90);
+        const yieldFn = spy((action: () => void) => setTimeout(action, 0));
         const options: YieldOptions = {
             timeBetweenYields: 100,
             getTimeFn,
@@ -90,10 +90,10 @@ describe("loopYieldingly", () => {
     });
 
     it("should yield after first loop if time greater than limit", done => {
-        const getTimeFn = stub()
-            .onCall(0).returns(0)
-            .onCall(1).returns(110);
-        const yieldFn = spy((action: () => void) => action());
+        const getTimeFn = stub();
+        getTimeFn.onFirstCall().returns(0);
+        getTimeFn.returns(110);
+        const yieldFn = spy((action: () => void) => setTimeout(action, 0));
         const options: YieldOptions = {
             timeBetweenYields: 100,
             getTimeFn,
@@ -105,6 +105,35 @@ describe("loopYieldingly", () => {
         ).then(success => {
             expect(success).to.equal("Success");
             expect(yieldFn).to.have.been.calledOnce;
+            done();
+        }).catch(done);
+    });
+
+    it("should yield multiple times if time is several times the limit", done => {
+        let time = 0;
+        const addTime = (ms: number) => time += ms;
+        const getTimeFn = () => time;
+        const yieldFn = spy((action: () => void) => setTimeout(action, 0));
+        const options: YieldOptions = {
+            timeBetweenYields: 100,
+            getTimeFn,
+            yieldFn,
+        };
+        let i = 0;
+        loopYieldingly(
+            onSuccess => {
+                if (i < 10) {
+                    // Should yield every two iterations.
+                    addTime(60);
+                } else {
+                    onSuccess("Success");
+                }
+                i++;
+            },
+            options,
+        ).then(success => {
+            expect(success).to.equal("Success");
+            expect(yieldFn).to.have.callCount(5);
             done();
         }).catch(done);
     });
