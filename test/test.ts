@@ -128,6 +128,23 @@ describe("loopYieldingly", () => {
             done();
         }).catch(done);
     });
+
+    it("should not go overtime if multiple loops are started in same frame", done => {
+        looper.loopYieldingly(onSuccess => {
+            addTime(51);
+            onSuccess("Success");
+        });
+        looper.loopYieldingly(onSuccess => {
+            if (yieldFn.callCount > 0) {
+                onSuccess("Success");
+            }
+            addTime(10);
+        }).then(success => {
+            expect(success).to.equal("Success");
+            expect(yieldFn).to.have.callCount(1);
+            expect(getTimeFn()).to.be.lessThan(110);
+        }).catch(done);
+    });
 });
 
 function afterNIterations<T>(n: number, action: LoopBody<T>): LoopBody<T> {
