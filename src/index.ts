@@ -36,8 +36,17 @@ export function loopSynchronous<T>(body: LoopBody<T>): T {
     }
 }
 
+/**
+ * Helper type holding a task to be executed in a loop.
+ */
+interface Task {
+    task(): void;
+    reject(error: any): void;
+}
+
 export class Looper {
     private readonly options: AllYieldOptions;
+    private readonly tasksById = new Map<number, Task>();
 
     constructor(options: YieldOptions = {}) {
         this.options = Object.assign({}, DEFAULT_OPTIONS, options);

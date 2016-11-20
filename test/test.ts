@@ -75,16 +75,8 @@ describe("loopYieldingly", () => {
     });
 
     it("should not yield if loop ends before time limit", done => {
-        let i = 0;
         looper.loopYieldingly(
-            onSuccess => {
-                if (i === 0) {
-                    addTime(90);
-                } else {
-                    onSuccess("Success");
-                }
-                i++;
-            }
+            doNTimes(1, () => addTime(90), () => "Success")
         ).then(success => {
             expect(success).to.equal("Success");
             expect(yieldFn).to.not.have.been.called;
@@ -93,16 +85,8 @@ describe("loopYieldingly", () => {
     });
 
     it("should yield after first loop if time greater than limit", done => {
-        let i = 0;
         looper.loopYieldingly(
-            onSuccess => {
-                if (i === 0) {
-                    addTime(110);
-                } else {
-                    onSuccess("Success");
-                }
-                i++;
-            }
+            doNTimes(1, () => addTime(110), () => "Success")
         ).then(success => {
             expect(success).to.equal("Success");
             expect(yieldFn).to.have.been.calledOnce;
@@ -111,17 +95,8 @@ describe("loopYieldingly", () => {
     });
 
     it("should yield multiple times if time is several times the limit", done => {
-        let i = 0;
         looper.loopYieldingly(
-            onSuccess => {
-                if (i < 10) {
-                    // Should yield every two iterations.
-                    addTime(60);
-                } else {
-                    onSuccess("Success");
-                }
-                i++;
-            }
+            doNTimes(10, () => addTime(60), () => "Success")
         ).then(success => {
             expect(success).to.equal("Success");
             expect(yieldFn).to.have.callCount(5);
@@ -153,6 +128,18 @@ function afterNIterations<T>(n: number, action: LoopBody<T>): LoopBody<T> {
         if (i >= n) {
             action(done);
         } else {
+            i++;
+        }
+    };
+}
+
+function doNTimes<T>(n: number, action: () => void, getResult: () => T): LoopBody<T> {
+    let i = 0;
+    return done => {
+        if (i >= n) {
+            done(getResult());
+        } else {
+            action();
             i++;
         }
     };
