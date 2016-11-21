@@ -2,7 +2,16 @@ import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
 import { spy } from "sinon";
 import * as sinonChai from "sinon-chai";
-import { LoopBody, loopSynchronous, Looper, YieldOptions } from "../src/index";
+import {
+    forEachBody,
+    forNBody,
+    LoopBody,
+    loopSynchronous,
+    Looper,
+    mapBody,
+    whileBody,
+    YieldOptions,
+} from "../src/index";
 
 const { expect } = chai;
 
@@ -21,7 +30,7 @@ describe("loopSynchronous", () => {
     });
 
     it("should return success after looping", () => {
-        const result = loopSynchronous<number>(summingBody(10));
+        const result = loopSynchronous(summingBody(10));
         expect(result).to.equal(45);
     });
 
@@ -30,6 +39,53 @@ describe("loopSynchronous", () => {
         expect(() => loopSynchronous(
             afterNIterations(10, () => { throw error; }))
         ).to.throw(error);
+    });
+});
+
+describe("loop body", () => {
+    describe("whileBody", () => {
+        it("should run action while condition is true", () => {
+            let i = 0;
+            const result = loopSynchronous(whileBody(
+                () => i < 10,
+                () => i++,
+                () => i
+            ));
+            expect(result).to.equal(10);
+        });
+    });
+
+    describe("forNBody", () => {
+        it("should run action n times with incrementing argument", () => {
+            const calls: number[] = [];
+            loopSynchronous(forNBody(
+                5,
+                i => calls.push(i),
+                () => calls
+            ));
+            expect(calls).to.deep.equal([0, 1, 2, 3, 4]);
+        });
+    });
+
+    describe("mapBody", () => {
+        it("should transform the array with its action", () => {
+            const result = loopSynchronous(mapBody(
+                [0, 1, 2, 3],
+                n => n * 2
+            ));
+            expect(result).to.deep.equal([0, 2, 4, 6]);
+        });
+    });
+
+    describe("forEachBody", () => {
+        it("should call the action on each element", () => {
+            const result: number[] = [];
+            loopSynchronous(forEachBody(
+                [0, 1, 2],
+                n => result.push(n)
+            ));
+            expect(result).to.deep.equal([0, 1, 2]);
+        });
     });
 });
 
@@ -76,7 +132,7 @@ describe("loopYieldingly", () => {
 
     it("should not yield if loop ends before time limit", done => {
         looper.loopYieldingly(
-            doNTimes(1, () => addTime(90), () => "Success")
+            forNBody(1, () => addTime(90), () => "Success")
         ).then(success => {
             expect(success).to.equal("Success");
             expect(yieldFn).to.not.have.been.called;
@@ -86,7 +142,7 @@ describe("loopYieldingly", () => {
 
     it("should yield after first loop if time greater than limit", done => {
         looper.loopYieldingly(
-            doNTimes(1, () => addTime(110), () => "Success")
+            forNBody(1, () => addTime(110), () => "Success")
         ).then(success => {
             expect(success).to.equal("Success");
             expect(yieldFn).to.have.been.calledOnce;
@@ -96,7 +152,7 @@ describe("loopYieldingly", () => {
 
     it("should yield multiple times if time is several times the limit", done => {
         looper.loopYieldingly(
-            doNTimes(10, () => addTime(60), () => "Success")
+            forNBody(10, () => addTime(60), () => "Success")
         ).then(success => {
             expect(success).to.equal("Success");
             expect(yieldFn).to.have.callCount(5);
@@ -133,29 +189,10 @@ function afterNIterations<T>(n: number, action: LoopBody<T>): LoopBody<T> {
     };
 }
 
-function doNTimes<T>(n: number, action: () => void, getResult: () => T): LoopBody<T> {
-    let i = 0;
-    return done => {
-        if (i >= n) {
-            done(getResult());
-        } else {
-            action();
-            i++;
-        }
-    };
-}
-
 /**
  * Loop body that sums the numbers 0, 1, ..., n-1.
  */
 function summingBody(n: number): LoopBody<number> {
-    let i = 0;
     let sum = 0;
-    return done => {
-        if (i >= n) {
-            done(sum);
-        } else {
-            sum += i++;
-        }
-    };
+    return forNBody(n, i => sum += i, () => sum);
 }

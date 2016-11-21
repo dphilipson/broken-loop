@@ -1,5 +1,7 @@
 import { Status } from "./Status";
 
+export * from "./loopBodies";
+
 export interface LoopBody<T> {
     (done: (result: T) => void): void;
 }
@@ -36,17 +38,18 @@ export function loopSynchronous<T>(body: LoopBody<T>): T {
     }
 }
 
-/**
- * Helper type holding a task to be executed in a loop.
- */
-interface Task {
-    task(): void;
-    reject(error: any): void;
+export function loopSynchronousWhile<T>(condition: () => boolean, body: () => void, result: () => T): T {
+    return loopSynchronous<T>(done => {
+        if (condition()) {
+            body();
+        } else {
+            done(result());
+        }
+    });
 }
 
 export class Looper {
     private readonly options: AllYieldOptions;
-    private readonly tasksById = new Map<number, Task>();
 
     constructor(options: YieldOptions = {}) {
         this.options = Object.assign({}, DEFAULT_OPTIONS, options);
