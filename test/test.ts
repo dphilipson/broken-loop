@@ -90,18 +90,24 @@ describe("loop body", () => {
 });
 
 describe("loopYieldingly", () => {
+    const timeBetweenYields = 100;
     let time: number;
     const addTime = (ms: number) => time += ms;
     const getTimeFn = () => time;
     let yieldFn: Sinon.SinonSpy;
+    let yieldTimes: number[];
     let options: YieldOptions;
     let looper: Looper;
 
     beforeEach(() => {
         time = 0;
-        yieldFn = spy((action: () => void) => setTimeout(action, 0));
+        yieldFn = spy((action: () => void) => {
+            yieldTimes.push(time);
+            setTimeout(action, 0);
+        });
+        yieldTimes = [];
         options = {
-            timeBetweenYields: 100,
+            timeBetweenYields,
             getTimeFn,
             yieldFn,
         };
@@ -160,20 +166,54 @@ describe("loopYieldingly", () => {
         }).catch(done);
     });
 
-    it("should not go overtime if multiple loops are started in same frame", done => {
-        looper.loopYieldingly(onSuccess => {
-            addTime(51);
-            onSuccess("Success");
-        });
-        looper.loopYieldingly(onSuccess => {
-            if (yieldFn.callCount > 0) {
-                onSuccess("Success");
+    it("should yield at the right time if multiple loops are running", done => {
+        const body = forNBody(50, () => addTime(10), () => "Success");
+        const promise1 = looper.loopYieldingly(body);
+        const promise2 = looper.loopYieldingly(body);
+        Promise.all([promise1, promise2]).then(([success1, success2]) => {
+            expect(success1).to.equal("Success");
+            expect(success2).to.equal("Success");
+            for (let i = 0; i < yieldTimes.length - 1; i++) {
+                const length = yieldTimes[i + 1] - yieldTimes[i];
+                expect(length).to.be.at.least(timeBetweenYields - 10,
+                    `Took too little time (${length} ms) before yielding`);
+                expect(length).to.be.at.most(timeBetweenYields + 10,
+                    `Took too much time (${length} ms) between yields`);
             }
-            addTime(10);
-        }).then(success => {
-            expect(success).to.equal("Success");
-            expect(yieldFn).to.have.callCount(1);
-            expect(getTimeFn()).to.be.lessThan(110);
+            done();
+        }).catch(done);
+    });
+
+    it("should give time to each running loop every period", done => {
+        const loop1Periods: number[] = [];
+        const loop2Periods: number[] = [];
+        const promise1 = looper.loopYieldingly(forNBody(
+            50,
+            () => {
+                loop1Periods.push(yieldTimes.length);
+                addTime(10);
+            },
+            () => "Success"));
+        const promise2 = looper.loopYieldingly(forNBody(
+            50,
+            () => {
+                loop2Periods.push(yieldTimes.length);
+                addTime(10);
+            },
+            () => "Success"));
+        Promise.all([promise1, promise2]).then(([success1, success2]) => {
+            expect(success1).to.equal("Success");
+            expect(success2).to.equal("Success");
+            function expectNoMissingPeriods(periods: number[]) {
+                for (let i = 0; i < periods.length - 1; i++) {
+                    const start = periods[i];
+                    const end = periods[i + 1];
+                    expect(end - start).to.be.at.most(1, `Skipped from period ${start} to period ${end}`);
+                }
+            }
+            expectNoMissingPeriods(loop1Periods);
+            expectNoMissingPeriods(loop2Periods);
+            done();
         }).catch(done);
     });
 });
