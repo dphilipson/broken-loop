@@ -18,7 +18,7 @@ interface AllYieldOptions {
     yieldFn(action: () => void): void;
 }
 
-export const DEFAULT_TIME_BETWEEN_YIELDS = 12;
+export const DEFAULT_TIME_BETWEEN_YIELDS = 14;
 
 const DEFAULT_OPTIONS: AllYieldOptions = {
     timeBetweenYields: DEFAULT_TIME_BETWEEN_YIELDS,
@@ -48,44 +48,57 @@ export function loopSynchronousWhile<T>(condition: () => boolean, body: () => vo
     });
 }
 
+interface LoopAction {
+    (done: () => void): void;
+}
+
 export class Looper {
     private readonly options: AllYieldOptions;
+    private readonly runningLoopActions: Set<LoopAction> = new Set();
 
     constructor(options: YieldOptions = {}) {
         this.options = Object.assign({}, DEFAULT_OPTIONS, options);
     }
 
     public loopYieldingly<T>(body: LoopBody<T>): Promise<T> {
+        return new Promise((resolve, reject) => {
+            this.runningLoopActions.add(done => {
+                try {
+                    body(result => {
+                        resolve(result);
+                        done();
+                    });
+                } catch (error) {
+                    reject(error);
+                    done();
+                }
+            });
+            if (this.runningLoopActions.size === 1) {
+                this.runNextPeriod();
+            }
+        });
+    }
+
+    private runNextPeriod(): void {
         const {
             timeBetweenYields,
             getTimeFn,
             yieldFn,
         } = this.options;
-        let status = Status.inProgress<T>();
-        return new Promise((resolve, reject) => {
-            const loop = () => {
-                const startTime = getTimeFn();
-                while (
-                    status.type === Status.Type.InProgress
-                    && getTimeFn() - startTime < timeBetweenYields
-                ) {
-                    try {
-                        body(result => { status = Status.success(result); });
-                    } catch (error) {
-                        status = Status.failure<T>(error);
-                    }
-                }
-                switch (status.type) {
-                    case Status.Type.Success:
-                        return resolve(status.result);
-                    case Status.Type.Failure:
-                        return reject(status.error);
-                    default:
-                        return yieldFn(loop);
-                }
-            };
-            loop();
+        const timePerLoop = timeBetweenYields / this.runningLoopActions.size;
+        [...this.runningLoopActions].forEach(action => {
+            const startTime = getTimeFn();
+            let isDone = false;
+            while (!isDone && getTimeFn() - startTime < timePerLoop) {
+                action(() => {
+                    isDone = true;
+                    this.runningLoopActions.delete(action);
+                });
+            }
         });
+        if (this.runningLoopActions.size > 0) {
+            yieldFn(() => this.runNextPeriod());
+        }
     }
 }
 
