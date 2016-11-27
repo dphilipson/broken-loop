@@ -66,11 +66,20 @@ interface LoopAction {
  * Looper for all their asynchronous calculations.
  */
 export class Looper {
+    public static allowMultipleInstances = false;
+    private static wasConstructed = false;
+
     private readonly options: AllYieldOptions;
     private readonly runningLoopActions: Set<LoopAction> = new Set();
 
     constructor(options: YieldOptions = {}) {
+        if (Looper.wasConstructed && !Looper.allowMultipleInstances) {
+            throw new Error(
+                "Looper constructor called multiple times. This is probably not what you want. If you are sure you"
+                + " want multiple Loopers, set Looper.allowMultipleInstances to true first.");
+        }
         this.options = Object.assign({}, DEFAULT_OPTIONS, options);
+        Looper.wasConstructed = true;
     }
 
     /**

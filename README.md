@@ -1,6 +1,6 @@
 # Broken Loop
 
-Helper class for breaking up long running computations in JavaScript.
+Helpers for breaking up long running computations in JavaScript.
 
 ## Overview
 
@@ -18,9 +18,15 @@ Broken Loop provides a generalized solution for this problem that allows long-ru
 
 This can be used similarly to how one might use a background thread to run a computation in another language to avoid freezing the UI or blocking a server from serving requests. For an alternative, see [Using Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers).
 
+## Installation
+
+```
+npm install --save broken-loop
+```
+
 ## API
 
-### new Looper(opts?)
+### `new Looper(opts?)`
 
 `Looper` is a class which manages and runs the currenly executing long-running computations. It may be provided the following optional options:
 
@@ -30,8 +36,9 @@ This can be used similarly to how one might use a background thread to run a com
 
 * `getTimeFn`. Function used to request the current time in milliseconds. Defaults to `Date.now()`. Most users will not need to change this.
 
-Since computation time on the main thread is a global resource, most users will want to share a single looper throughout their entire program. A possible pattern to take advantage of this would be as follows.
+Since computation time on the main thread is a global resource, most users will want to share a single looper throughout their entire program. Therefore, calling the `Looper` constructor multiple times is an error unless the flag `Looper.allowMultipleInstances` is set to `true` first.
 
+A possible pattern for sharing a `Looper` across a program is as follows:
 ```
 /* myLooper.js */
 import { Looper } from 'broken-loop';
@@ -105,7 +112,7 @@ while (i < 10) {
 console.log(sum);
 ```
 
-#### `forNBody(n, body, getResult)
+#### `forNBody(n, body, getResult)`
 
 Executes the body `n` times. Each time, the body is provided the index of the current iteration, from `0` to `n-1`.
 
@@ -201,6 +208,6 @@ Web Workers are a great solution to this problem, and if you're happy with them 
 * They must use `postMessage()` to communicate, which adds boilerplate.
 * They don't work in React Native as of version 0.38.
 
-All this boilerplate means a larger surface area for bugs, and is otherwise a hassle to work with. Broken Loop makes for more readable code, and if you're using React Native then you don't have a choice.
+All this boilerplate means a larger surface area for bugs and is otherwise a hassle to work with. Broken Loop makes for more readable code, and if you're using React Native then you don't have a choice.
 
 Copyright © 2016 David Philipson
