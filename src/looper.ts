@@ -118,9 +118,3 @@ export class Looper {
         }
     }
 }
-
-const DEFAULT_LOOPER = new Looper();
-
-export function loopYieldingly<T>(body: LoopBody<T>): Promise<T> {
-    return DEFAULT_LOOPER.loopYieldingly(body);
-}
