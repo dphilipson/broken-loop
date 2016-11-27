@@ -1,7 +1,7 @@
 {
   "name": "broken-loop",
   "version": "1.0.0",
-  "description": "Break up long-running computations to avoid blocking the event loop.",
+  "description": "Helpers for breaking up long running computations in JavaScript.",
   "main": "dist/index.js",
   "types": "dist/index",
   "files": [

@@ -18,6 +18,8 @@ const { expect } = chai;
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
 
+Looper.allowMultipleInstances = true;
+
 describe("loopSynchronous", () => {
     it("should return value on immediate success", () => {
         const result = loopSynchronous(done => done("Success"));
@@ -87,6 +89,38 @@ describe("loop body", () => {
             expect(result).to.deep.equal([0, 1, 2]);
         });
     });
+});
+
+describe("Looper", () => {
+    it("should throw if constructed more than once if allowMultipleInstances unset", () => {
+        withAllowMultipleInstances(false, () => {
+            expect(() => {
+                /* tslint:disable:no-unused-new */
+                new Looper();
+                new Looper();
+                /* tslint:enable:no-unused-new */
+            }).to.throw();
+        });
+    });
+
+    it("should not throw if constructed more than once if allowMultipleInstances is set", () => {
+        withAllowMultipleInstances(true, () => {
+            /* tslint:disable:no-unused-new */
+            new Looper();
+            new Looper();
+            /* tslint:enable:no-unused-new */
+        });
+    });
+
+    function withAllowMultipleInstances<T>(allowMultipleInstances: boolean, body: () => T): T {
+        const oldAllowMultipleInstances = Looper.allowMultipleInstances;
+        Looper.allowMultipleInstances = allowMultipleInstances;
+        try {
+            return body();
+        } finally {
+            Looper.allowMultipleInstances = oldAllowMultipleInstances;
+        }
+    }
 });
 
 describe("loopYieldingly", () => {
