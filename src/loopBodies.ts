@@ -1,4 +1,4 @@
-import { LoopBody } from "./index";
+import { LoopBody } from "./looper";
 
 export function whileBody<T>(condition: () => boolean, body: () => void, result: () => T): LoopBody<T> {
     return done => {
