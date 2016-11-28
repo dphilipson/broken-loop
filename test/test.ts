@@ -1,6 +1,6 @@
 import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
-import { spy } from "sinon";
+import { SinonSpy, spy } from "sinon";
 import * as sinonChai from "sinon-chai";
 import {
     forEachBody,
@@ -128,7 +128,7 @@ describe("loopYieldingly", () => {
     let time: number;
     const addTime = (ms: number) => time += ms;
     const getTimeFn = () => time;
-    let yieldFn: Sinon.SinonSpy;
+    let yieldFn: SinonSpy;
     let yieldTimes: number[];
     let options: YieldOptions;
     let looper: Looper;
