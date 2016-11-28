@@ -1,6 +1,6 @@
 {
   "name": "broken-loop",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Helpers for breaking up long running computations in JavaScript.",
   "main": "dist/index.js",
   "types": "dist/index",
