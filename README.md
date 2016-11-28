@@ -2,6 +2,8 @@
 
 Helpers for breaking up long running computations in JavaScript.
 
+[![Build Status](https://travis-ci.org/dphilipson/broken-loop.svg?branch=develop)](https://travis-ci.org/dphilipson/broken-loop)
+
 ## Overview
 
 Long-running computations pose a challenge for JavaScript authors. JavaScript is single-threaded, so if a computation takes a long time then it will prevent the program from doing anything else while it runs, including responding to user input or updating the UI.
