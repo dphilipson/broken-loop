@@ -39,13 +39,13 @@ npm install --save broken-loop
 Since computation time on the main thread is a global resource, most users will want to share a single looper throughout their entire program. Therefore, calling the `Looper` constructor multiple times is an error unless the flag `Looper.allowMultipleInstances` is set to `true` first.
 
 A possible pattern for sharing a `Looper` across a program is as follows:
-```
+``` javascript
 /* myLooper.js */
 import { Looper } from 'broken-loop';
 
 export const myLooper = new Looper();
 ```
-```
+``` javascript
 /* elsewhere.js */
 import { myLooper } from './myLooper';
 
@@ -57,7 +57,7 @@ myLooper.loopYieldingly(/* ... */);
 Takes a `LoopBody`, which is a block of code which is to be run repeatedly. The block is provided a `done` function, which should be called to signal a successful result. Returns a promise which is fulfilled when the body is completed by calling `done`.
 
 Example:
-```
+``` javascript
 import { Looper } from 'broken-loop';
 
 const looper = new Looper();
@@ -85,7 +85,7 @@ Helpers are provided for common types of loop bodies one might write. These allo
 Loops as long as the predicate is true. When the predicate becomes false, return the result of calling `getResult` (the third argument).
 
 Example:
-```
+``` javascript
 import { Looper, whileBody } from 'broken-loop';
 
 const looper = new Looper();
@@ -102,7 +102,7 @@ looper.loopYieldingly(whileBody(
 ```
 
 Compare to synchronous version:
-```
+``` javascript
 let sum = 0;
 let i = 0;
 while (i < 10) {
@@ -117,7 +117,7 @@ console.log(sum);
 Executes the body `n` times. Each time, the body is provided the index of the current iteration, from `0` to `n-1`.
 
 Example:
-```
+``` javascript
 import { Looper, forNBody } from 'broken-loop';
 
 const looper = new Looper();
@@ -130,7 +130,7 @@ looper.loopYieldingly(forNBody(
 ```
 
 Compare to synchronous version:
-```
+``` javascript
 let sum = 0;
 for (let i = 0; i < 10; i++) {
     sum += i;
@@ -143,7 +143,7 @@ console.log(sum);
 Calls the body on each item in the provided array and returns nothing.
 
 Example:
-```
+``` javascript
 import { Looper, forEachBody } from 'broken-loop';
 
 const looper = new Looper();
@@ -154,7 +154,7 @@ looper.loopYieldingly(forEachBody([1, 2, 3], console.log));
 ```
 
 Compare to synchronous version:
-```
+``` javascript
 [1, 2, 3].forEach(console.log);
 ```
 
@@ -166,7 +166,7 @@ Example:
 Calls the body on each item in the provided array and returns nothing.
 
 Example:
-```
+``` javascript
 import { Looper, mapBody } from 'broken-loop';
 
 const looper = new Looper();
@@ -178,7 +178,7 @@ looper.loopYieldingly(mapBody(
 ```
 
 Compare to synchronous version:
-```
+``` javascript
 const result = [1, 2, 3].map(n => n * n);
 console.log(result);
 ```
@@ -188,7 +188,7 @@ console.log(result);
 Like `loopYieldingly()`, but runs the entire computation in place and returns the result directly rather than returning a promise. This is most useful if you are not yet sure whether a computation takes long enough to be worth running asynchronously. You can then write the loop body once and switch between the synchronous and asynchronous as needed.
 
 Example:
-```
+``` javascript
 import { loopSynchronous, forNBody } from 'broken-loop';
 
 let sum = 0;
